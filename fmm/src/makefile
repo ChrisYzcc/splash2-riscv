@@ -1,7 +1,7 @@
 TARGET = fmm
 OBJS = defs.o memory.o particle.o box.o partition_grid.o \
        cost_zones.o construct_grid.o interactions.o fmm.o 
-LDFLAGS = -lpthread -lm
+LDFLAGS += -lpthread -lm
 MACROS = ../../../null_macros/c.m4.null.pthread
 M4 = m4 -s -Ulen -Uindex
 

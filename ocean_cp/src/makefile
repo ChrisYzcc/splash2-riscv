@@ -1,7 +1,7 @@
 TARGET = ocean_cp
 OBJS = main.o jacobcalc.o jacobcalc2.o laplacalc.o \
 	slave1.o slave2.o multi.o linkup.o subblock.o 
-LDFLAGS = -lpthread -lm 
+LDFLAGS += -lpthread -lm 
 MACROS = ../../../null_macros/c.m4.null.pthread
 M4 = m4 -s -Ulen -Uindex
 

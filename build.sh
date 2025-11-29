@@ -26,6 +26,13 @@ export LDFLAGS="-L${CC_HOME}/lib64 -L${CC_HOME}/lib -no-pie -static"
 export LIBS=""
 export EXTRA_LIBS=""
 
+# RISC-V Cross Compile Prefix
+if [ "$PLATFORM" = "rv64" ]; then
+    CROSS_COMPILE_PREFIX=riscv64-linux-gnu-
+else
+    CROSS_COMPILE_PREFIX=
+fi
+
 # Compilers and preprocessors
 CC_HOME=/usr/bin
 export CC="${CC_HOME}/${CROSS_COMPILE_PREFIX}gcc"

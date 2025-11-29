@@ -3,7 +3,7 @@ FILES = code.C code_io.C load.C grav.C getparam.C util.C \
 	code.H defs.H stdinc.H vectmath.H
 CS = code.c code_io.c load.c grav.c getparam.c util.c 
 OBJS = code.o code_io.o load.o grav.o getparam.o util.o
-LDFLAGS = -lm -lpthread
+LDFLAGS += -lm -lpthread
 MACROS = ../../../null_macros/c.m4.null.pthread
 M4 = m4 -s -Ulen -Uindex
 
