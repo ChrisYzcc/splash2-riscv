@@ -62,7 +62,6 @@ if [ "${PROGRAM}" = "all" ]; then
         echo "============================================================================"
         echo "  Building Target : ${prog}"
         echo "  Platform        : ${PLATFORM}"
-        echo "  Version         : ${VERSION}"
         echo "============================================================================"
         cd ${prog}
         ./build.sh
@@ -85,7 +84,6 @@ else
     echo "============================================================================"
     echo "  Building Target : ${PROGRAM}"
     echo "  Platform        : ${PLATFORM}"
-    echo "  Version         : ${VERSION}"
     echo "============================================================================"
 
 
