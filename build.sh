@@ -3,7 +3,7 @@ export SPLASH2DIR=$(pwd)
 PLATFORM=native
 PROGRAM=barnes
 
-ALL=""
+ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
 while getopts "p:rh" opt; do
     case "$opt" in
@@ -69,7 +69,7 @@ if [ "${PROGRAM}" = "all" ]; then
             echo -e "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
             FAILED_LIST="$FAILED_LIST $prog"
         fi
-        cd ..
+        cd ${SPLASH2DIR}
     done
 
     echo "============================================================================"
@@ -94,7 +94,7 @@ else
         cd ..
         exit 1
     fi
-    cd ..
+    cd ${SPLASH2DIR}
 
     echo "============================================================================"
     echo "  Build of ${PROGRAM} completed."
