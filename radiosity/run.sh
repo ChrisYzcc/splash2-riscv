@@ -7,7 +7,7 @@ else
     rm -rf "${RUN_DIR}"/*
 fi
 
-echo "Running ocean_ncp..."
+echo "Running radiosity..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/ocean_ncp -n258 -p${NTHREADS} -e1e-07 -r20000 -t28800
+${BENCH_DIR}/build/${PLATFORM}/bin/radiosity -batch -room -p ${NTHREADS}
 cd ${BENCH_DIR}
