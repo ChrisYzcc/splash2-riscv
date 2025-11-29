@@ -21,4 +21,6 @@ cat ${INPUT_TEMPLATE} | sed s/NUMPROCS/$NTHREADS/ > ${INPUT_FILE}
 echo
 
 echo "Running fmm..."
+cd ${RUN_DIR}
 ${BENCH_DIR}/build/${PLATFORM}/bin/fmm ${NTHREADS} < ${INPUT_FILE}
+cd ${BENCH_DIR}
