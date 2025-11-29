@@ -3,7 +3,7 @@ TARGET = water_nsquared
 OBJS = water.o mdmain.o syscons.o kineti.o bndry.o cnstnt.o initia.o \
        interf.o intraf.o cshift.o poteng.o predcor.o
 CFLAGS += -O2 -w  
-LDFLAGS = -lm -pthread 
+LDFLAGS += -lm -pthread 
 MACROS = ../../../null_macros/c.m4.null.pthread
 
 x = *
@@ -30,7 +30,6 @@ $(TARGET): $(OBJS)
 install:
 	mkdir -p $(PREFIX)/bin
 	cp -f $(TARGET) $(PREFIX)/bin/$(TARGET)
-	cp -f run.sh $(PREFIX)/bin/run.sh
 
 clean:
 	rm -rf *.c *.h *.o $(TARGET)

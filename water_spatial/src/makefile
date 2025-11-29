@@ -2,8 +2,8 @@ TARGET = water_spatial
 
 OBJS = water.o mdmain.o syscons.o kineti.o bndry.o cnstnt.o initia.o \
        interf.o intraf.o cshift.o poteng.o predcor.o
-CFLAGS = -O2 -w 
-LDFLAGS = -lm -lpthread
+CFLAGS += -O2 -w 
+LDFLAGS += -lm -lpthread
 MACROS = ../../../null_macros/c.m4.null.pthread
 
 x = *
@@ -19,18 +19,17 @@ MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 .C.c:
 	m4 $(MACROS) $*.C > $*.c
 .c.o:
-	gcc -c $(CFLAGS) $*.c
+	$(CC) -c $(CFLAGS) $*.c
 .C.o:
 	m4 $(MACROS) $*.C > $*.c
-	gcc -c $(CFLAGS) $*.c
+	$(CC) -c $(CFLAGS) $*.c
 
 $(TARGET): $(OBJS)
-	gcc $(OBJS) $(CFLAGS) -o $(TARGET) $(LDFLAGS)
+	$(CC) $(OBJS) $(CFLAGS) -o $(TARGET) $(LDFLAGS)
 
 install:
 	mkdir -p $(PREFIX)/bin
 	cp -f $(TARGET) $(PREFIX)/bin/$(TARGET)
-	cp -f run.sh $(PREFIX)/bin/run.sh
 
 clean:
 	rm -rf *.c *.h *.o $(TARGET)
