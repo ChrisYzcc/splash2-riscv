@@ -37,6 +37,8 @@
  *    Seattle, WA  98104
  *    206-622-5500
  */
+
+#include "types.h"
 #define	TIFF_VERSION	42
 
 #define	TIFF_BIGENDIAN		0x4d4d

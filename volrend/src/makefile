@@ -1,9 +1,9 @@
 TARGET = volrend
 OBJS = main.o file.o option.o map.o normal.o opacity.o octree.o view.o \
        render.o adaptive.o raytrace.o
-CFLAGS += -O2 -w -DPRESHD $(CDEBUG) -Ilibtiff
-CCOPTS = -S -I -I$(SIMDIR) -I$(IDIR) -I/usr/include -DAUG $(CFLAGS)
-LDFLAGS += -O2 -w -pthread -lm -Ilibtiff -Llibtiff -ltiff
+CFLAGS += -O2 -w -DPRESHD $(CDEBUG)
+CCOPTS = -S -I -I$(SIMDIR) -I$(IDIR) -DAUG $(CFLAGS)
+LDFLAGS += -O2 -w -pthread -lm
 MACROS = ../../../null_macros/c.m4.null.pthread
 
 x = *

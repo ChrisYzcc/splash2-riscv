@@ -24,12 +24,12 @@
 # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
 # OF THIS SOFTWARE.
 #
-DESTDIR=/usr/local
+DESTDIR=${SPLASH2DIR}/volrend/build/${PLATFORM}/libtiff
 #
-AR=	/usr/bin/ar
 NULL=
+INSTALL = install
 
-IPATH=	-I. -I/usr/include/bsd
+IPATH=	-I.
 #
 # Library-wide configuration defines:
 #    MMAP_SUPPORT	add support for memory mapping read-only files
@@ -71,7 +71,7 @@ CONF_LIBRARY=\
 	${NULL}
 CFLAGS=	-O ${IPATH} ${CONF_LIBRARY} -ansi
 #
-INCS=	tiff.h tiffio.h
+INCS=	tiff.h tiffio.h types.h
 SRCS=	tif_fax3.c \
 	tif_fax4.c \
 	tif_aux.c \
@@ -150,14 +150,14 @@ g3states.h: mkg3states.c t4.h
 
 install: all installh
 	-for i in ${ALL}; do \
-		${INSTALL} -c -m 644 $$i ${DESTDIR}/lib/$$i; \
+		${INSTALL} -D -c -m 644 $$i ${DESTDIR}/lib/$$i; \
 	done
 
 installh: ${INCS}
 	-for i in ${INCS}; do \
 	    h=`basename $$i`; \
 	    cmp -s $$i ${DESTDIR}/include/$$h || \
-	        ${INSTALL} -c -m 444 $$i ${DESTDIR}/include/$$h; \
+	        ${INSTALL} -D -c -m 444 $$i ${DESTDIR}/include/$$h; \
 	done
 
 clean:

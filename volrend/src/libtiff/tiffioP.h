@@ -31,6 +31,8 @@
  */
 #include "tiffcompat.h"
 #include "tiff.h"
+#include "types.h"
+
 
 /*
  * Internal format of a TIFF directory entry.
