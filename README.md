@@ -4,7 +4,7 @@
 **Build Command**
 ```
 Usage: ./build.sh [-p program] [-r] [-h]
-  -p program : specify the program to build, default: blackscholes
+  -p program : specify the program to build, default: barnes
   -r          : set platform to rv64
   -h          : display this help message
 ```
@@ -12,7 +12,7 @@ Usage: ./build.sh [-p program] [-r] [-h]
 **Run Command**
 ```
 Usage: ./run.sh [-p program] [-r] [-v version] [-h]
-  -p program : specify the program to run, default: blackscholes
+  -p program : specify the program to run, default: barnes
   -r          : set platform to rv64
   -n threads   : specify the number of threads, default: 1
   -h          : display this help message

@@ -8,7 +8,7 @@ while getopts "p:rhn:" opt; do
         r) PLATFORM=rv64 ;;
         n) NTHREADS=$OPTARG ;;
         h) echo "Usage: $0 [-p program] [-r] [-v version] [-h]"
-           echo "  -p program : specify the program to run, default: blackscholes"
+           echo "  -p program : specify the program to run, default: barnes"
            echo "  -r          : set platform to rv64"
            echo "  -n threads   : specify the number of threads, default: 1"
            echo "  -h          : display this help message"
