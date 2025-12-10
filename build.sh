@@ -71,6 +71,11 @@ if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
     echo "  Platform        : ${PLATFORM}"
     echo "============================================================================"
 
+    if [ "${PLATFORM}" = "rv64" ]; then
+        export CFLAGS="${CFLAGS} -DNEMU"
+        export CXXFLAGS="${CXXFLAGS} -DNEMU"
+    fi
+
     if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj" ]; then
         mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
         cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
@@ -84,8 +89,8 @@ if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
     else
         echo "  parsec_hooks already built for ${PLATFORM}, skipping."
     fi
-    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include"
-    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include"
+    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
+    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
     export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib -lhooks"
     echo "============================================================================"
     echo

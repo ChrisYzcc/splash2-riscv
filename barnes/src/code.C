@@ -74,6 +74,10 @@ MAIN_ENV
 #include <math.h>
 #include <time.h>
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 string defv[] = {                 /* DEFAULT PARAMETER VALUES              */
     /* file names for input/output                                         */
     "in=",                        /* snapshot of initial conditions        */
@@ -109,6 +113,10 @@ string argv[];
    unsigned ProcessId = 0;
    int c;
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_begin(__splash2_barnes);
+#endif
+
    while ((c = getopt(argc, argv, "h")) != -1) {
      switch(c) {
       case 'h': 
@@ -136,6 +144,9 @@ string argv[];
    /* Create the slave processes: number of processors less one,
       since the master will do work as well */
    Global->current_id = 0;
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_begin();
+#endif
    //for(ProcessId = 1; ProcessId < NPROC; ProcessId++) {
       CREATE(SlaveStart, NPROC);
    //}
@@ -148,6 +159,9 @@ string argv[];
    CLOCK(Global->computeend);
 
    WAIT_FOR_END(NPROC);
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_end();
+#endif
 
    printf("COMPUTEEND    = %12lu\n",Global->computeend);
    printf("COMPUTETIME   = %12lu\n",Global->computeend - Global->computestart);
@@ -164,6 +178,10 @@ string argv[];
 	  ((float)(Global->tracktime-Global->partitiontime-
 		   Global->treebuildtime-Global->forcecalctime))/
 	  Global->tracktime);
+
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_end(__splash2_barnes);
+#endif
    MAIN_END;
 }
 

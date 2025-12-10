@@ -73,6 +73,10 @@ static double time_end;
 #include <stdbool.h>
 #endif //ENABLE_SETAFFINITY
 
+#include <pthread.h>
+#include <sched.h>
+#include <unistd.h>
+
 /** Enable debugging code */
 #define DEBUG 0
 
@@ -170,6 +174,39 @@ void __parsec_bench_end() {
   printf(HOOKS_PREFIX" Terminating\n");
 }
 
+#ifdef NEMU
+#define DISABLE_TIME_INTR 0x100
+#define NOTIFY_PROFILER 0x101
+#define NOTIFY_PROFILE_EXIT 0x102
+#define GOOD_TRAP 0x0
+
+void nemu_signal(int a){
+    asm volatile ("mv a0, %0\n\t"
+                  ".insn r 0x6B, 0, 0, x0, x0, x0\n\t"
+                  :
+                  : "r"(a)
+                  : "a0");
+}
+
+#define MAX_CPUS 4
+
+void* init_ckp(void *arg) {
+  long cpu = (long)arg;
+
+  cpu_set_t set;
+  CPU_ZERO(&set);
+  CPU_SET(cpu, &set);
+
+  pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+
+  //printf("Target CPU: %ld, Actual CPU: %ld\n", cpu, sched_getcpu());
+  nemu_signal(DISABLE_TIME_INTR);
+  nemu_signal(NOTIFY_PROFILER);
+  
+  return NULL;
+}
+#endif
+
 void __parsec_roi_begin() {
   #if DEBUG
   num_roi_begins++;
@@ -178,6 +215,22 @@ void __parsec_roi_begin() {
   assert(num_roi_ends==0);
   assert(num_bench_ends==0);
   #endif //DEBUG
+
+#ifdef NEMU
+  // for each core
+  int cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+  printf("CPU count = %d\n", cpu_count);
+
+  pthread_t th[cpu_count];
+
+  for (long i = 0; i < cpu_count; i++) {
+      pthread_create(&th[i], NULL, init_ckp, (void*)i);
+  }
+
+  for (int i = 0; i < cpu_count; i++) {
+      pthread_join(th[i], NULL);
+  }
+#endif
 
   printf(HOOKS_PREFIX" Entering ROI\n");
   fflush(NULL);
