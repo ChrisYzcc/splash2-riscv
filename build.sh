@@ -2,16 +2,19 @@ export SPLASH2DIR=$(pwd)
 
 PLATFORM=native
 PROGRAM=barnes
+ENABLE_CHECKPOINT=false
 
 ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
-while getopts "p:rh" opt; do
+while getopts "p:rch" opt; do
     case "$opt" in
         p) PROGRAM=$OPTARG ;;
         r) PLATFORM=rv64 ;;
+        c) ENABLE_CHECKPOINT=true ;;
         h) echo "Usage: $0 [-p program] [-r] [-h]"
            echo "  -p program : specify the program to build, default: barnes"
            echo "  -r          : set platform to rv64"
+           echo "  -c          : enable checkpoint"
            echo "  -h          : display this help message"
            exit 0 ;;
     esac
@@ -61,9 +64,34 @@ export MAKE=/usr/bin/make
 export PLATFORM
 export VERSION
 
+# Build parsec_hook for checkpoint
+if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
+    echo "============================================================================"
+    echo "  Building Target : parsec_hooks (for checkpoint)"
+    echo "  Platform        : ${PLATFORM}"
+    echo "============================================================================"
+
+    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj" ]; then
+        mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
+        cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
+        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
+        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj install
+
+        if [ $? -ne 0 ]; then
+            echo -e "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
+            exit 1
+        fi
+    else
+        echo "  parsec_hooks already built for ${PLATFORM}, skipping."
+    fi
+    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include"
+    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include"
+    export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib -lhooks"
+    echo "============================================================================"
+    echo
+fi
+
 if [ "${PROGRAM}" = "all" ]; then
-
-
     FAILED_LIST=""
     for prog in $ALL; do
         echo "============================================================================"
