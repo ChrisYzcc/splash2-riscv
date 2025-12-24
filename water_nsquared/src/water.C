@@ -47,6 +47,10 @@ MAIN_ENV
 #include "stdio.h"
 #include "split.h"
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 /*  include files for declarations  */
 #define extern
 #include "parameters.h"
@@ -89,6 +93,10 @@ main(argc, argv)
     int mol, func, dir, atom;
     double XTT, MDMAIN();
     unsigned ProcID = 0;
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_begin(__splash2_water_nsquared);
+#endif
     
     /* default values for the control parameters of the driver */
     /* are in parameters.h */
@@ -232,11 +240,17 @@ main(argc, argv)
     gl->Index = 1;
     
     /* spawn helper processes, each getting its unique process id */
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_begin();
+#endif
+
     CLOCK(gl->createstart);
     //for (ProcID = 1; ProcID < NumProcs; ProcID += 1) {
     CREATE(WorkStart, NumProcs);
     //}
     CLOCK(gl->createend);
+    
     LOCK(gl->IOLock);
     printf("CREATETIME = %d\n",gl->createend-gl->createstart);
     UNLOCK(gl->IOLock);
@@ -251,7 +265,12 @@ main(argc, argv)
     
     /* macro to make main process wait for all others to finish */
     WAIT_FOR_END(NumProcs)
-        CLOCK(gl->computeend);
+    
+    CLOCK(gl->computeend);
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_end();
+#endif
     
     printf("COMPUTESTART (after initialization) = %lu\n",gl->computestart);
     printf("COMPUTEEND = %lu\n",gl->computeend);
@@ -263,6 +282,10 @@ main(argc, argv)
     
     printf("\nExited Happily with XTT = %g (note: XTT value is garbage if NPRINT > NSTEP)\n", XTT);
     
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_end(__splash2_water_nsquared);
+#endif
+
     MAIN_END;
 } /* main.c */
 
