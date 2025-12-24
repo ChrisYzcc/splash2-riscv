@@ -39,6 +39,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 MAIN_ENV
 
 #define MAXRAND                         32767.0
@@ -115,6 +120,10 @@ char *argv[];
   double avg_fac, avg_solve, avg_mod, avg_bar;
   int proc_num;
   unsigned long start;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_lu_ncb);
+#endif
 
   CLOCK(start);
 
@@ -200,6 +209,10 @@ char *argv[];
    matrix data across physically distributed memories in a 
    round-robin fashion as desired. */
 
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_begin();
+#endif
+
   BARINIT(Global->start);
   LOCKINIT(Global->idlock);
   Global->id = 0;
@@ -223,6 +236,10 @@ char *argv[];
     printf("\nMatrix after decomposition:\n");
     PrintA();
   }
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_end();
+#endif
 
   if (dostats) {
     maxt = avgt = mint = Global->completion[0];
@@ -317,6 +334,10 @@ char *argv[];
     printf("                             TESTING RESULTS\n");
     CheckResult(n, a, rhs);
   }
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_end(__splash2_lu_ncb);
+#endif
 
   MAIN_END;
 }
