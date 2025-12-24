@@ -23,6 +23,11 @@
  ***************************************************************/
 
 #include <stdio.h>
+
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #if defined(SGI_GL)
 #include <gl.h>
 #if defined(GL_NASA)
@@ -161,6 +166,10 @@ include(radiosity.h)
     unsigned long int total_refine_time, max_refine_time, min_refine_time;
     unsigned long int total_wait_time, max_wait_time, min_wait_time;
     unsigned long int total_vertex_time, max_vertex_time, min_vertex_time;
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_begin(__splash2_radiosity);
+#endif
     
     /* Parse arguments */
     parse_args( ac, av ) ;
@@ -228,6 +237,10 @@ include(radiosity.h)
                     taskqueue_id[i] = assign_taskq(0) ;
 
                 }
+
+            #ifdef ENABLE_PARSEC_HOOKS
+                __parsec_roi_begin();
+            #endif
             
             CREATE(radiosity, n_processors);
             /* And start processing */
@@ -235,6 +248,10 @@ include(radiosity.h)
             //radiosity() ;
             
             WAIT_FOR_END(n_processors);
+
+            #ifdef ENABLE_PARSEC_HOOKS
+                __parsec_roi_end();
+            #endif
             
             /* Time stamp */
             CLOCK( time_rad_end );
@@ -314,6 +331,11 @@ include(radiosity.h)
             g_start( expose_callback,
                     N_SLIDERS, sliders, N_CHOICES, choices ) ;
         }
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_end(__splash2_radiosity);
+#endif
+
     MAIN_END;
     exit(0) ;
 }
