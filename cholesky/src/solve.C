@@ -36,6 +36,10 @@ MAIN_ENV
 #include <math.h>
 #include "matrix.h"
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #define SH_MEM_AMT   100000000
 #define DEFAULT_PPS         32
 #define DEFAULT_CS       16384
@@ -99,6 +103,10 @@ char *argv[];
   extern int *block_start, *all_blocks;
   unsigned long start;
   double mint, maxt, avgt;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_cholesky);
+#endif
 
   CLOCK(start)
 
@@ -256,6 +264,10 @@ char *argv[];
   ComputeRemainingFO();
   ComputeReceivedFO();
 
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_begin();
+#endif
+
   //for (i=1; i<P; i++) {
   CREATE(Go, P)
   //}
@@ -263,6 +275,10 @@ char *argv[];
   //Go();
 
   WAIT_FOR_END(P)
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_end();
+#endif
 
   printf("%.0f operations for factorization\n", work_tree[M.n]);
 
@@ -315,6 +331,10 @@ char *argv[];
       printf("PASSED\n");
     }
   }
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_end();
+#endif
 
   MAIN_END
 }
