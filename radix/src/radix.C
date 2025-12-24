@@ -39,6 +39,10 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #define DEFAULT_P                    1
 #define DEFAULT_N               262144
 #define DEFAULT_R                 1024 
@@ -145,6 +149,9 @@ char *argv;
    int offset;
    int toffset;
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_begin(__splash2_radix);
+#endif
 
    CLOCK(start)
 
@@ -322,7 +329,11 @@ char *argv;
    }  */
 
    /* Fill the random-number array. */
-   
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_begin();
+#endif
+
    //for (i = 1; i < number_of_processors; i++) {
    CREATE(slave_sort, number_of_processors)
    //}
@@ -330,6 +341,10 @@ char *argv;
    //slave_sort();
 
    WAIT_FOR_END(number_of_processors)
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_end();
+#endif
 
    printf("\n");
    printf("                 PROCESS STATISTICS\n");
@@ -401,6 +416,10 @@ char *argv;
      test_sort(global->final);  
    }
   
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_end(__splash2_radix);
+#endif
+
    MAIN_END;
 }
 
