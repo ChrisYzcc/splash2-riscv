@@ -28,6 +28,11 @@ MAIN_ENV
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #define DEFAULT_N      258
 #define DEFAULT_P        1
 #define DEFAULT_E        1e-7
@@ -252,6 +257,10 @@ char *argv[];
    extern char *optarg;
    int ch;
    unsigned long start;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_ocean_ncp);
+#endif
 
    CLOCK(start)
 
@@ -560,6 +569,10 @@ char *argv[];
      }
    }
 
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_begin();
+#endif
+
    //for (i=1;i<nprocs;i++) {
      CREATE(slave, nprocs)
    //}
@@ -570,6 +583,11 @@ char *argv[];
 
    //slave();
    WAIT_FOR_END(nprocs)
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_end();
+#endif
+
    CLOCK(computeend)
 
    printf("\n");
@@ -638,6 +656,10 @@ char *argv[];
            computeend-global->trackstart);
    printf("    (excludes first timestep)\n");
    printf("\n");
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_end(__splash2_ocean_ncp);
+#endif
 
    MAIN_END
 }
