@@ -84,6 +84,10 @@
 #include <math.h>
 #include "rt.h"
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 
 CHAR	*ProgName     = "RAYTRACE";          /* The program name.                 */
 INT	nprocs	      = 1;		/* The number of processors to use.  */
@@ -253,6 +257,9 @@ CHAR	*argv[];
 	CHAR	*pch;
 	MATRIX	vtrans, Vinv;		/*  View transformation and inverse. */
 
+#ifdef ENABLE_PARSEC_HOOKS
+	__parsec_bench_begin(__splash2_raytrace);
+#endif
 
 	/*
 	 *	First, process command line arguments.
@@ -416,15 +423,23 @@ CHAR	*argv[];
 	 */
 
 	CLOCK(begin)
+
+#ifdef ENABLE_PARSEC_HOOKS
+	__parsec_roi_begin();
+#endif
+
 	//for (i = 0; i < gm->nprocs - 1; i++)
 	CREATE(StartRayTrace, gm->nprocs)
 
 	//StartRayTrace();
 
 	WAIT_FOR_END(gm->nprocs)
+
+#ifdef ENABLE_PARSEC_HOOKS
+	__parsec_roi_end();
+#endif
+
 	CLOCK(end)
-
-
 
 	/*
 	 *	We are finished.  Clean up, print statistics and run time.
@@ -468,6 +483,10 @@ CHAR	*argv[];
         printf("%20s%20d\n","Min = ",minproctime);
         printf("%20s%20d\n","Avg = ",(int) (((double) totalproctime) / ((double) (1.0 * gm->nprocs))));
     }
+
+#ifdef ENABLE_PARSEC_HOOKS
+	__parsec_bench_end(__splash2_raytrace);
+#endif
 
 	MAIN_END
 	}
