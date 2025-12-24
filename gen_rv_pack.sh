@@ -20,3 +20,4 @@ for PROGRAM in $ALL; do
 done
 
 cp -r ${SPLASH2DIR}/run.sh ${SPLASH2DIR}/splash2_rv_pack/
+sed -i 's|^\./run\.sh$|/bin/sh ./run.sh|' ${SPLASH2DIR}/splash2_rv_pack/run.sh

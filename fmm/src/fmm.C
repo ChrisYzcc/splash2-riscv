@@ -79,6 +79,10 @@
 #include "construct_grid.h"
 #include "interactions.h"
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #define BASE ((((double) 4) - sqrt((double) 2)) / sqrt((double) 2))
 #define MAX_LINE_SIZE 100
 /* OCCUPANCY * maximum particles per box = avg number of particles per box */
@@ -117,6 +121,9 @@ main (int argc, char *argv[])
    int i;
    int c;
    extern char *optarg;
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_begin(__splash2_fmm);
+#endif
   
    CLOCK(starttime);
 
@@ -135,16 +142,29 @@ main (int argc, char *argv[])
    InitExpTables();
    CreateDistribution(Cluster, Model);
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_begin();
+#endif
+
    //for (i = 1; i < Number_Of_Processors; i++) {
       CREATE(ParallelExecute, Number_Of_Processors);
    //}
    //ParallelExecute();
    WAIT_FOR_END(Number_Of_Processors);
+
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_end();
+#endif
+
    printf("Finished FMM\n");
    PrintTimes();
    if (do_output) {
      PrintAllParticles();
    }
+
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_end(__splash2_fmm);
+#endif
    MAIN_END;
 }
 

@@ -190,7 +190,7 @@ void nemu_signal(int a){
 
 #define MAX_CPUS 4
 
-void* init_ckp(void *arg) {
+void* gen_ckp(void *arg) {
   long cpu = (long)arg;
 
   cpu_set_t set;
@@ -199,15 +199,34 @@ void* init_ckp(void *arg) {
 
   pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
 
-  //printf("Target CPU: %ld, Actual CPU: %ld\n", cpu, sched_getcpu());
   nemu_signal(DISABLE_TIME_INTR);
   nemu_signal(NOTIFY_PROFILER);
-  
+
   return NULL;
 }
+
+void _halt(void *arg) {
+  long cpu = (long)arg;
+
+  cpu_set_t set;
+  CPU_ZERO(&set);
+  CPU_SET(cpu, &set);
+
+  pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+
+  int code = 0;
+  asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
+
+  // should not reach here
+  while (1);
+}
+
 #endif
 
 void __parsec_roi_begin() {
+  printf(HOOKS_PREFIX" Entering ROI\n");
+  fflush(NULL);
+
   #if DEBUG
   num_roi_begins++;
   assert(num_bench_begins==1);
@@ -219,21 +238,19 @@ void __parsec_roi_begin() {
 #ifdef NEMU
   // for each core
   int cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
-  printf("CPU count = %d\n", cpu_count);
+  printf("[checkpoint] Starting CPU count = %d\n", cpu_count);
+  fflush(NULL);
 
   pthread_t th[cpu_count];
 
   for (long i = 0; i < cpu_count; i++) {
-      pthread_create(&th[i], NULL, init_ckp, (void*)i);
+      pthread_create(&th[i], NULL, gen_ckp, (void*)i);
   }
 
   for (int i = 0; i < cpu_count; i++) {
       pthread_join(th[i], NULL);
   }
 #endif
-
-  printf(HOOKS_PREFIX" Entering ROI\n");
-  fflush(NULL);
 
   #if ENABLE_TIMING
   struct timeval t;
@@ -276,5 +293,22 @@ void __parsec_roi_end() {
 
   printf(HOOKS_PREFIX" Leaving ROI\n");
   fflush(NULL);
+
+#ifdef NEMU
+  // for each core
+  int cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+  printf("[checkpoint] Shutting down CPU count = %d\n", cpu_count);
+  fflush(NULL);
+
+  pthread_t th[cpu_count];
+
+  for (long i = 0; i < cpu_count; i++) {
+      pthread_create(&th[i], NULL, _halt, (void*)i);
+  }
+
+  for (int i = 0; i < cpu_count; i++) {
+      pthread_join(th[i], NULL);
+  }
+#endif
 }
 
