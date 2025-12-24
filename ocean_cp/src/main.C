@@ -60,6 +60,10 @@ MAIN_ENV
 #include <math.h>
 #include <time.h>
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 struct multi_struct {
    double err_multi;
 } *multi;
@@ -225,6 +229,10 @@ char *argv[];
    extern char *optarg;
    unsigned long computeend;
    unsigned long start;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_ocean_cp);
+#endif
 
    CLOCK(start)
 
@@ -535,6 +543,10 @@ char *argv[];
    im = (imx[numlev-1]-2)/yprocs + 2;
    jm = (jmx[numlev-1]-2)/xprocs + 2;
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_begin();
+#endif
+
    //for (i=1;i<nprocs;i++) {
      CREATE(slave, nprocs)  
    //}
@@ -545,6 +557,11 @@ char *argv[];
 
    //slave();
    WAIT_FOR_END(nprocs)
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_roi_end();
+#endif
+  
    CLOCK(computeend)
 
    printf("\n");
@@ -613,6 +630,10 @@ char *argv[];
            computeend-global->trackstart);
    printf("    (excludes first timestep)\n");
    printf("\n");
+
+#ifdef ENABLE_PARSEC_HOOKS
+    __parsec_bench_end(__splash2_ocean_cp);
+#endif
 
    MAIN_END
 }
