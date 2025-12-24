@@ -31,6 +31,10 @@
 #include <sys/resource.h>
 #include "tiffio.h"
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 #define SH_MEM_AMT 60000000
 
 MAIN_ENV
@@ -89,10 +93,23 @@ main(argc, argv)
     }
   }
 
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_volrend);
+#endif
+
   Frame();
 
   if (num_nodes > 1)
     WAIT_FOR_END(num_nodes);
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_end();
+#endif
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_end(__splash2_volrend);
+#endif
+
   MAIN_END;
 }	
 
@@ -213,6 +230,10 @@ Frame()
 #endif
 
   Global->Index = NODE0;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_roi_begin();
+#endif
 
   printf("\nRendering...\n");
   printf("node\tframe\ttime\titime\trays\thrays\tsamples trilirped\n");
