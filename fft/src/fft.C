@@ -52,6 +52,10 @@
 #define DEFAULT_M                 10
 #define DEFAULT_P                  1
 
+#ifdef ENABLE_PARSEC_HOOKS
+#include <hooks.h>
+#endif
+
 MAIN_ENV
 
 #define SWAP(a,b) {double tmp; tmp=a; a=b; b=tmp;}
@@ -123,6 +127,10 @@ char *argv;
   int factor;
   int pages;
   unsigned long start;
+
+#ifdef ENABLE_PARSEC_HOOKS
+  __parsec_bench_begin(__splash2_fft);
+#endif
 
   CLOCK(start);
 
@@ -310,6 +318,10 @@ char *argv;
   InitU(N,umain);               /* initialize u arrays*/
   InitU2(N,umain2,rootN);
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_begin();
+#endif
+
   /* fire off P processes */
   //for (i=1; i<P; i++) {
   CREATE(SlaveStart, P);
@@ -317,6 +329,10 @@ char *argv;
   //SlaveStart();
 
   WAIT_FOR_END(P)
+
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_roi_end();
+#endif
 
   if (doprint) {
     if (test_result) {
@@ -408,6 +424,9 @@ char *argv;
     }
   }
 
+#ifdef ENABLE_PARSEC_HOOKS
+   __parsec_bench_end(__splash2_fft);
+#endif
   MAIN_END;
 }
 
