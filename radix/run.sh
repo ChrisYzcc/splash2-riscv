@@ -9,5 +9,5 @@ fi
 
 echo "Running radix..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/radix -p${NTHREADS} -r1024 -n262144 -m524288
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/radix -p${NTHREADS} -r1024 -n262144 -m524288
 cd ${BENCH_DIR}

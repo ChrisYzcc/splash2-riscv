@@ -9,7 +9,7 @@ CFLAGS +=  -O2 -w
 
 x = *
 
-PREFIX=${SPLASH2DIR}/raytrace/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/raytrace/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 $(TARGET): $(OBJS)

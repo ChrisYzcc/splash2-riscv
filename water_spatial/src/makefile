@@ -8,7 +8,7 @@ MACROS = ../../../null_macros/c.m4.null.pthread
 
 x = *
 
-PREFIX=${SPLASH2DIR}/water_spatial/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/water_spatial/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 .SUFFIXES:

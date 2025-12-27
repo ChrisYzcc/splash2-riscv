@@ -7,7 +7,7 @@ M4 = m4 -s -Ulen -Uindex
 
 x = *
 
-PREFIX=${SPLASH2DIR}/ocean_cp/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/ocean_cp/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 $(TARGET): $(OBJS)

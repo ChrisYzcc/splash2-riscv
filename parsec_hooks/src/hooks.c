@@ -221,6 +221,20 @@ void _halt(void *arg) {
   while (1);
 }
 
+void _exit_profiler(void *arg) {
+  long cpu = (long)arg;
+
+  cpu_set_t set;
+  CPU_ZERO(&set);
+  CPU_SET(cpu, &set);
+
+  pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+
+  nemu_signal(NOTIFY_PROFILE_EXIT);
+
+  return NULL;
+}
+
 #endif
 
 void __parsec_roi_begin() {
@@ -303,7 +317,13 @@ void __parsec_roi_end() {
   pthread_t th[cpu_count];
 
   for (long i = 0; i < cpu_count; i++) {
-      pthread_create(&th[i], NULL, _halt, (void*)i);
+#ifdef ENABLE_PROFILING
+    // notify profiler to exit
+    pthread_create(&th[i], NULL, _exit_profiler, (void*)i);
+#else
+    // halt all cores
+    pthread_create(&th[i], NULL, _halt, (void*)i);
+#endif
   }
 
   for (int i = 0; i < cpu_count; i++) {

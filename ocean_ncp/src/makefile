@@ -7,7 +7,7 @@ MACROS = ../../../null_macros/c.m4.null.pthread
 
 x = *
 
-PREFIX=${SPLASH2DIR}/ocean_ncp/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/ocean_ncp/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 $(TARGET): $(OBJS)

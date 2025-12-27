@@ -9,5 +9,5 @@ fi
 
 echo "Running lu_ncb..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/lu_ncb -p${NTHREADS} -n512 -b16
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/lu_ncb -p${NTHREADS} -n512 -b16
 cd ${BENCH_DIR}

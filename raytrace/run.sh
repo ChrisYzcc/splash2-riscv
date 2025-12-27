@@ -17,5 +17,5 @@ ARGS="-s -p${NTHREADS} teapot.env"
 
 echo "Running Raytrace..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/raytrace ${ARGS}
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/raytrace ${ARGS}
 cd ${BENCH_DIR}

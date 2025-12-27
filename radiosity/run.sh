@@ -9,5 +9,5 @@ fi
 
 echo "Running radiosity..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/radiosity -batch -room -p ${NTHREADS}
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/radiosity -batch -room -p ${NTHREADS}
 cd ${BENCH_DIR}

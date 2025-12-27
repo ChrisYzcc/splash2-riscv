@@ -17,5 +17,5 @@ INPUT_FILE="${RUN_DIR}/tk14.O"
 
 echo "Running Cholesky..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/cholesky -p${NTHREADS} < ${INPUT_FILE}
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/cholesky -p${NTHREADS} < ${INPUT_FILE}
 cd ${BENCH_DIR}

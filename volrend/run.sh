@@ -17,5 +17,5 @@ ARGS="${NTHREADS} head-scaleddown4"
 
 echo "Running Volrend..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/volrend ${ARGS}
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/volrend ${ARGS}
 cd ${BENCH_DIR}

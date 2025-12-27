@@ -9,5 +9,5 @@ fi
 
 echo "Running ocean_cp..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/ocean_cp -n258 -p${NTHREADS} -e1e-07 -r20000 -t28800
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/ocean_cp -n258 -p${NTHREADS} -e1e-07 -r20000 -t28800
 cd ${BENCH_DIR}

@@ -6,16 +6,18 @@ ENABLE_CHECKPOINT=false
 
 ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
-while getopts "p:rch" opt; do
+USAGE="normal"
+
+while getopts "p:ru:h" opt; do
     case "$opt" in
         p) PROGRAM=$OPTARG ;;
         r) PLATFORM=rv64 ;;
-        c) ENABLE_CHECKPOINT=true ;;
-        h) echo "Usage: $0 [-p program] [-r] [-h]"
-           echo "  -p program : specify the program to build, default: barnes"
-           echo "  -r          : set platform to rv64"
-           echo "  -c          : enable checkpoint"
-           echo "  -h          : display this help message"
+        u) USAGE=$OPTARG ;;
+        h) echo "Usage: $0 [-p program] [-r] [-h] [-u usage]"
+           echo "  -p program   : specify the program to build. Default: barnes"
+           echo "  -r           : set platform to rv64"
+           echo "  -u           : set usage: normal, profiling, checkpoint. Default: normal"
+           echo "  -h           : display this help message"
            exit 0 ;;
     esac
 done
@@ -64,10 +66,24 @@ export MAKE=/usr/bin/make
 export PLATFORM
 export VERSION
 
+# Check usage mode
+if [ "$USAGE" = "checkpoint" ]; then
+    ENABLE_CHECKPOINT=true
+elif [ "$USAGE" = "profiling"]; then
+    ENABLE_CHECKPOINT=true
+    export CFLAGS="${CFLAGS} -DENABLE_PROFILING"
+    export CXXFLAGS="${CXXFLAGS} -DENABLE_PROFILING"
+elif [ "$USAGE" != "normal" ]; then
+    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
+    exit 1
+fi
+
+export USAGE
+
 # Build parsec_hook for checkpoint
 if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
     echo "============================================================================"
-    echo "  Building Target : parsec_hooks (for checkpoint)"
+    echo "  Building Target : parsec_hooks (FOR CHECKPOINTING AND PROFILING)"
     echo "  Platform        : ${PLATFORM}"
     echo "============================================================================"
 
@@ -76,22 +92,24 @@ if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
         export CXXFLAGS="${CXXFLAGS} -DNEMU"
     fi
 
-    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj" ]; then
+    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib" ]; then
         mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
         cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
         make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
         make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj install
 
         if [ $? -ne 0 ]; then
-            echo -e "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
+            echo "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
             exit 1
         fi
     else
         echo "  parsec_hooks already built for ${PLATFORM}, skipping."
     fi
+
     export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
     export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
     export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib -lhooks"
+
     echo "============================================================================"
     echo
 fi
@@ -102,11 +120,12 @@ if [ "${PROGRAM}" = "all" ]; then
         echo "============================================================================"
         echo "  Building Target : ${prog}"
         echo "  Platform        : ${PLATFORM}"
+        echo "  USAGE           : ${USAGE}"
         echo "============================================================================"
         cd ${prog}
         ./build.sh
         if [ $? -ne 0 ]; then
-            echo -e "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
+            echo "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
             FAILED_LIST="$FAILED_LIST $prog"
         fi
         cd ${SPLASH2DIR}
@@ -116,7 +135,7 @@ if [ "${PROGRAM}" = "all" ]; then
     echo "  Build of all programs completed."
     echo "============================================================================"
     if [ -n "$FAILED_LIST" ]; then
-        echo -e "\033[31m[ERROR] The following programs failed to build:$FAILED_LIST\033[0m"
+        echo "\033[31m[ERROR] The following programs failed to build:$FAILED_LIST\033[0m"
         exit 1
     fi
     exit 0
@@ -124,13 +143,14 @@ else
     echo "============================================================================"
     echo "  Building Target : ${PROGRAM}"
     echo "  Platform        : ${PLATFORM}"
+    echo "  USAGE           : ${USAGE}"
     echo "============================================================================"
 
 
     cd ${PROGRAM}
     ./build.sh
     if [ $? -ne 0 ]; then
-        echo -e "\033[31m[ERROR] Build failed for ${PROGRAM}!\033[0m"
+        echo "\033[31m[ERROR] Build failed for ${PROGRAM}!\033[0m"
         cd ..
         exit 1
     fi

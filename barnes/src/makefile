@@ -9,7 +9,7 @@ M4 = m4 -s -Ulen -Uindex
 
 x = *
 
-PREFIX=${SPLASH2DIR}/barnes/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/barnes/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 $(TARGET): $(OBJS)

@@ -9,5 +9,5 @@ fi
 
 echo "Running fft..."
 cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/bin/fft -m16 -p${NTHREADS}
+${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/fft -m16 -p${NTHREADS}
 cd ${BENCH_DIR}

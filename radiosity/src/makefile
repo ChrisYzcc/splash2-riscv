@@ -13,7 +13,7 @@ CFLAGS := $(CFLAGS) -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wredun
 CFLAGS := $(CFLAGS) -Wpadded -Winline -Wpointer-arith -Wsign-compare -Wendif-labels
 LDFLAGS := $(LDFLAGS) -lm -lpthread
 
-PREFIX=${SPLASH2DIR}/radiosity/build/${PLATFORM}
+PREFIX=${SPLASH2DIR}/radiosity/build/${PLATFORM}/${USAGE}
 MACROS = ${SPLASH2DIR}/null_macros/c.m4.null.pthread
 
 .PHONY:	install clean
