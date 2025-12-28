@@ -69,7 +69,7 @@ export VERSION
 # Check usage mode
 if [ "$USAGE" = "checkpoint" ]; then
     ENABLE_CHECKPOINT=true
-elif [ "$USAGE" = "profiling"]; then
+elif [ "$USAGE" = "profiling" ]; then
     ENABLE_CHECKPOINT=true
     export CFLAGS="${CFLAGS} -DENABLE_PROFILING"
     export CXXFLAGS="${CXXFLAGS} -DENABLE_PROFILING"

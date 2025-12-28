@@ -2,22 +2,70 @@ SPLASH2DIR=$(pwd)
 
 ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
+INPUTS="test"
+USAGE="normal"
+
+while getopts "i:u:h" opt; do
+    case "$opt" in
+        i) INPUTS=$OPTARG ;;
+        u) USAGE=$OPTARG ;;
+        h) echo "Usage: $0 [-i inputs] [-u usage] [-h]"
+           echo "  -i inputs    : specify the inputs to package. Default: test"
+           echo "  -u usage     : set usage: normal, profiling, checkpoint. Default: normal"
+           echo "  -h           : display this help message"
+           exit 0 ;;
+    esac
+done
+
 if [ ! -d "${SPLASH2DIR}/splash2_rv_pack" ]; then
     mkdir -p ${SPLASH2DIR}/splash2_rv_pack
 else
     rm -rf ${SPLASH2DIR}/splash2_rv_pack/*
 fi
 
+if [ "$USAGE" != "normal" ] && [ "$USAGE" != "profiling" ] && [ "$USAGE" != "checkpoint" ]; then
+    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
+    exit 1
+fi
+
+INPUT_LIST=""
+if [ "$INPUTS" = "test" ]; then
+    INPUT_LIST="test"
+else
+    echo "\033[31m[ERROR] Unknown inputs: $INPUTS\033[0m"
+    exit 1
+fi
+
+echo "==========================================================="
+echo "  Input sets to package   : $INPUT_LIST"
+echo "  Usage mode              : $USAGE"
+echo "==========================================================="
+
 for PROGRAM in $ALL; do
     mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}
 
-    mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64
-    cp -r ${SPLASH2DIR}/${PROGRAM}/build/rv64/bin ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64/bin
+    # Copy binaries
+    mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64/${USAGE}
+    cp -r ${SPLASH2DIR}/${PROGRAM}/build/rv64/${USAGE}/bin ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64/${USAGE}/bin
+
+    # Copy inputs and run script
     if [ -d "${SPLASH2DIR}/${PROGRAM}/inputs" ]; then
-        cp -r ${SPLASH2DIR}/${PROGRAM}/inputs ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/inputs
+        mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/inputs
+        for INPUT in $INPUT_LIST; do
+            INPUT_TAR="input_${INPUT}.tar"
+            if [ -f "${SPLASH2DIR}/${PROGRAM}/inputs/${INPUT_TAR}" ]; then
+                cp ${SPLASH2DIR}/${PROGRAM}/inputs/${INPUT_TAR} ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/inputs/${INPUT_TAR}
+            else
+                echo "\033[33m[WARNING] Input ${INPUT_TAR} does not exist for program ${PROGRAM}\033[0m"
+            fi
+        done
     fi
+
     cp -r ${SPLASH2DIR}/${PROGRAM}/run.sh ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/
 done
+
+echo "  Generating package completed."
+echo "==========================================================="
 
 cp -r ${SPLASH2DIR}/run.sh ${SPLASH2DIR}/splash2_rv_pack/
 sed -i 's|^\./run\.sh$|/bin/sh ./run.sh|' ${SPLASH2DIR}/splash2_rv_pack/run.sh

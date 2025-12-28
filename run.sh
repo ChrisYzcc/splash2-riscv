@@ -22,6 +22,12 @@ while getopts "p:rhn:u:" opt; do
     esac
 done
 
+# Check USAGE mode
+if [ "$USAGE" != "normal" ] && [ "$USAGE" != "profiling" ] && [ "$USAGE" != "checkpoint" ]; then
+    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
+    exit 1
+fi
+
 export PLATFORM
 export NTHREADS
 export USAGE
