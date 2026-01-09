@@ -92,23 +92,23 @@ if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
         export CXXFLAGS="${CXXFLAGS} -DNEMU"
     fi
 
-    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib" ]; then
-        mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
-        cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
-        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj
-        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/obj install
+    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib" ]; then
+        mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
+        cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
+        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
+        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj install
 
         if [ $? -ne 0 ]; then
             echo "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
             exit 1
         fi
     else
-        echo "  parsec_hooks already built for ${PLATFORM}, skipping."
+        echo "  parsec_hooks already built for ${PLATFORM}, ${USAGE}, skipping."
     fi
 
-    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
-    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/include -DENABLE_PARSEC_HOOKS"
-    export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/lib -lhooks"
+    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS"
+    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS"
+    export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib -lhooks"
 
     echo "============================================================================"
     echo

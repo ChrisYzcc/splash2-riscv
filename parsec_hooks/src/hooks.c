@@ -213,6 +213,8 @@ void _halt(void *arg) {
   CPU_SET(cpu, &set);
 
   pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+  printf("[checkpoint] Halt on CPU %ld\n", cpu);
+  fflush(NULL);
 
   int code = 0;
   asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
@@ -229,6 +231,8 @@ void _exit_profiler(void *arg) {
   CPU_SET(cpu, &set);
 
   pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+  printf("[checkpoint] Exit profiler on CPU %ld\n", cpu);
+  fflush(NULL);
 
   nemu_signal(NOTIFY_PROFILE_EXIT);
 
