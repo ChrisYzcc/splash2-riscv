@@ -24,7 +24,7 @@ done
 
 # Arguments to use
 export CFLAGS=" -O3 -g -funroll-loops ${PORTABILITY_FLAGS}"
-export CXXFLAGS="-O3 -g -funroll-loops -fpermissive -fno-exceptions ${PORTABILITY_FLAGS} -std=c++98"
+export CXXFLAGS="-O3 -g -funroll-loops -fpermissive -fno-exceptions ${PORTABILITY_FLAGS}"
 export CPPFLAGS=""
 export CXXCPPFLAGS=""
 export LDFLAGS="-L${CC_HOME}/lib64 -L${CC_HOME}/lib -no-pie"
@@ -74,7 +74,7 @@ elif [ "$USAGE" = "profiling" ]; then
     export CFLAGS="${CFLAGS} -DENABLE_PROFILING"
     export CXXFLAGS="${CXXFLAGS} -DENABLE_PROFILING"
 elif [ "$USAGE" != "normal" ]; then
-    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
+    echo -e "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
     exit 1
 fi
 
@@ -87,27 +87,31 @@ if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
     echo "  Platform        : ${PLATFORM}"
     echo "============================================================================"
 
+    # We need std=gnu99+ for parsec hook
+    export CFLAGS="${CFLAGS} -std=gnu99"
+    export CXXFLAGS="${CXXFLAGS} -std=gnu99"
+
     if [ "${PLATFORM}" = "rv64" ]; then
         export CFLAGS="${CFLAGS} -DNEMU"
         export CXXFLAGS="${CXXFLAGS} -DNEMU"
     fi
 
-    if [ ! -d "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib" ]; then
+    if [ ! -f "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib/libhooks.a" ]; then
         mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
         cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
         make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
         make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj install
 
-        if [ $? -ne 0 ]; then
-            echo "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
+        if [ ! -f "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib/libhooks.a" ]; then
+            echo -e "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
             exit 1
         fi
     else
-        echo "  parsec_hooks already built for ${PLATFORM}, ${USAGE}, skipping."
+        echo -e "\033[33m  parsec_hooks already built for ${PLATFORM}, ${USAGE}, skipping.\033[0m"
     fi
 
-    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS"
-    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS"
+    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS -std=gnu89"
+    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS -std=gnu89"
     export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib -lhooks"
 
     echo "============================================================================"
@@ -125,7 +129,7 @@ if [ "${PROGRAM}" = "all" ]; then
         cd ${prog}
         ./build.sh
         if [ $? -ne 0 ]; then
-            echo "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
+            echo -e "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
             FAILED_LIST="$FAILED_LIST $prog"
         fi
         cd ${SPLASH2DIR}
@@ -135,7 +139,7 @@ if [ "${PROGRAM}" = "all" ]; then
     echo "  Build of all programs completed."
     echo "============================================================================"
     if [ -n "$FAILED_LIST" ]; then
-        echo "\033[31m[ERROR] The following programs failed to build:$FAILED_LIST\033[0m"
+        echo -e "\033[31m[ERROR] The following programs failed to build:$FAILED_LIST\033[0m"
         exit 1
     fi
     exit 0
@@ -150,7 +154,7 @@ else
     cd ${PROGRAM}
     ./build.sh
     if [ $? -ne 0 ]; then
-        echo "\033[31m[ERROR] Build failed for ${PROGRAM}!\033[0m"
+        echo -e "\033[31m[ERROR] Build failed for ${PROGRAM}!\033[0m"
         cd ..
         exit 1
     fi
