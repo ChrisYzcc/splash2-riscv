@@ -1,166 +1,106 @@
-export SPLASH2DIR=$(pwd)
+#!/bin/sh
+set -eu
 
+SPLASH2DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export SPLASH2DIR
 PLATFORM=native
 PROGRAM=barnes
-ENABLE_CHECKPOINT=false
-
+USAGE=normal
 ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
-USAGE="normal"
+usage() {
+    cat <<EOF_USAGE
+Usage: $0 [-p program|all] [-r] [-u normal|profiling|checkpoint] [-h]
+  -p program   Program to build (default: barnes)
+  -r           Cross-compile for RISC-V Linux (rv64)
+  -u usage     Build mode (default: normal)
+  -h           Display this help
+EOF_USAGE
+}
 
 while getopts "p:ru:h" opt; do
     case "$opt" in
         p) PROGRAM=$OPTARG ;;
         r) PLATFORM=rv64 ;;
         u) USAGE=$OPTARG ;;
-        h) echo "Usage: $0 [-p program] [-r] [-h] [-u usage]"
-           echo "  -p program   : specify the program to build. Default: barnes"
-           echo "  -r           : set platform to rv64"
-           echo "  -u           : set usage: normal, profiling, checkpoint. Default: normal"
-           echo "  -h           : display this help message"
-           exit 0 ;;
+        h) usage; exit 0 ;;
+        *) usage >&2; exit 1 ;;
     esac
 done
+shift $((OPTIND - 1))
+[ "$#" -eq 0 ] || { usage >&2; exit 1; }
+case " $ALL all " in
+    *" $PROGRAM "*) ;;
+    *) echo "Unknown program: $PROGRAM" >&2; exit 1 ;;
+esac
+case "$USAGE" in
+    normal|profiling|checkpoint) ;;
+    *) echo "Unknown usage mode: $USAGE" >&2; exit 1 ;;
+esac
+export PLATFORM USAGE
 
-# Arguments to use
-export CFLAGS=" -O3 -g -funroll-loops ${PORTABILITY_FLAGS}"
-export CXXFLAGS="-O3 -g -funroll-loops -fpermissive -fno-exceptions ${PORTABILITY_FLAGS}"
-export CPPFLAGS=""
-export CXXCPPFLAGS=""
-export LDFLAGS="-L${CC_HOME}/lib64 -L${CC_HOME}/lib -no-pie"
-export LIBS=""
-export EXTRA_LIBS=""
-
-USE_STATIC=yes
-if [ "$USE_STATIC" = "yes" ]; then
-    export CFLAGS="${CFLAGS} -static"
-    export CXXFLAGS="${CXXCPPFLAGS} -static"
-    export LDFLAGS="${LDFLAGS} -static"
-fi
-
-# RISC-V Cross Compile Prefix
-if [ "$PLATFORM" = "rv64" ]; then
-    CROSS_COMPILE_PREFIX=riscv64-linux-gnu-
+if [ "$PLATFORM" = rv64 ]; then
+    CROSS_COMPILE=${CROSS_COMPILE:-riscv64-linux-gnu-}
 else
-    CROSS_COMPILE_PREFIX=
+    CROSS_COMPILE=
 fi
+export CC="${CC:-${CROSS_COMPILE}gcc}"
+export AR="${AR:-${CROSS_COMPILE}ar}"
+export RANLIB="${RANLIB:-${CROSS_COMPILE}ranlib}"
+export HOSTCC="${HOSTCC:-cc}"
+export M4="${M4:-m4}"
+MAKE=${MAKE:-make}
+for tool in "$CC" "$AR" "$RANLIB" "$HOSTCC" "$M4" "$MAKE"; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "Required tool not found: $tool" >&2
+        exit 1
+    }
+done
 
-# Compilers and preprocessors
-CC_HOME=/usr/bin
-export CC="${CC_HOME}/${CROSS_COMPILE_PREFIX}gcc"
-export CXX="${CC_HOME}/${CROSS_COMPILE_PREFIX}g++"
-export CPP="${CC_HOME}/${CROSS_COMPILE_PREFIX}cpp"
-
-# GNU Binutils
-BINUTIL_HOME=/usr/bin
-export LD="${BINUTIL_HOME}/${CROSS_COMPILE_PREFIX}ld"
-export NM="${BINUTIL_HOME}/${CROSS_COMPILE_PREFIX}nm"
-export STRIP="${BINUTIL_HOME}/${CROSS_COMPILE_PREFIX}strip"
-export AR="${CC_HOME}/${CROSS_COMPILE_PREFIX}ar"
-export RANLIB="${CC_HOME}/${CROSS_COMPILE_PREFIX}ranlib"
-
-# GNU Tools
-export M4=/usr/bin/m4
-export MAKE=/usr/bin/make
-
-export PLATFORM
-export VERSION
-
-# Check usage mode
-if [ "$USAGE" = "checkpoint" ]; then
-    ENABLE_CHECKPOINT=true
-elif [ "$USAGE" = "profiling" ]; then
-    ENABLE_CHECKPOINT=true
-    export CFLAGS="${CFLAGS} -DENABLE_PROFILING"
-    export CXXFLAGS="${CXXFLAGS} -DENABLE_PROFILING"
-elif [ "$USAGE" != "normal" ]; then
-    echo -e "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
-    exit 1
+# SPLASH-2 uses GNU89 C; the hooks library needs GNU99 instead.
+export CFLAGS="-O3 -g -funroll-loops -std=gnu89 ${PORTABILITY_FLAGS:-} ${CFLAGS:-}"
+export LDFLAGS="-no-pie -static ${LDFLAGS:-}"
+if [ "$USAGE" = profiling ]; then
+    CFLAGS="$CFLAGS -DENABLE_PROFILING"
 fi
-
-export USAGE
-
-# Build parsec_hook for checkpoint
-if [ "${ENABLE_CHECKPOINT}" = "true" ]; then
-    echo "============================================================================"
-    echo "  Building Target : parsec_hooks (FOR CHECKPOINTING AND PROFILING)"
-    echo "  Platform        : ${PLATFORM}"
-    echo "============================================================================"
-
-    # We need std=gnu99+ for parsec hook
-    export CFLAGS="${CFLAGS} -std=gnu99"
-    export CXXFLAGS="${CXXFLAGS} -std=gnu99"
-
-    if [ "${PLATFORM}" = "rv64" ]; then
-        export CFLAGS="${CFLAGS} -DNEMU"
-        export CXXFLAGS="${CXXFLAGS} -DNEMU"
+if [ "$USAGE" != normal ]; then
+    if [ "$PLATFORM" = rv64 ]; then
+        CFLAGS="$CFLAGS -DNEMU"
     fi
-
-    if [ ! -f "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib/libhooks.a" ]; then
-        mkdir -p ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
-        cp -r ${SPLASH2DIR}/parsec_hooks/src/* ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
-        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj
-        make -C ${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/obj install
-
-        if [ ! -f "${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib/libhooks.a" ]; then
-            echo -e "\033[31m[ERROR] Build failed for parsec_hooks!\033[0m"
-            exit 1
-        fi
-    else
-        echo -e "\033[33m  parsec_hooks already built for ${PLATFORM}, ${USAGE}, skipping.\033[0m"
-    fi
-
-    export CFLAGS="${CFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS -std=gnu89"
-    export CXXFLAGS="${CXXFLAGS} -I${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/include -DENABLE_PARSEC_HOOKS -std=gnu89"
-    export LDFLAGS="${LDFLAGS} -L${SPLASH2DIR}/parsec_hooks/build/${PLATFORM}/${USAGE}/lib -lhooks"
-
-    echo "============================================================================"
-    echo
+    hooks_dir="$SPLASH2DIR/parsec_hooks/build/$PLATFORM/$USAGE"
+    # Rebuild from source so changed flags or removed sources cannot leave stale objects.
+    rm -rf "$hooks_dir"
+    mkdir -p "$hooks_dir/obj"
+    cp -R "$SPLASH2DIR/parsec_hooks/src/." "$hooks_dir/obj/"
+    "$MAKE" -C "$hooks_dir/obj" CFLAGS="$CFLAGS -std=gnu99"
+    "$MAKE" -C "$hooks_dir/obj" install
+    CFLAGS="$CFLAGS -I$hooks_dir/include -DENABLE_PARSEC_HOOKS"
+    LDFLAGS="$LDFLAGS -L$hooks_dir/lib -lhooks"
 fi
 
-if [ "${PROGRAM}" = "all" ]; then
-    FAILED_LIST=""
-    for prog in $ALL; do
-        echo "============================================================================"
-        echo "  Building Target : ${prog}"
-        echo "  Platform        : ${PLATFORM}"
-        echo "  USAGE           : ${USAGE}"
-        echo "============================================================================"
-        cd ${prog}
-        ./build.sh
-        if [ $? -ne 0 ]; then
-            echo -e "\033[31m[ERROR] Build failed for ${prog}!\033[0m"
-            FAILED_LIST="$FAILED_LIST $prog"
-        fi
-        cd ${SPLASH2DIR}
+build_program() (
+    program=$1
+    build_dir="$SPLASH2DIR/$program/build/$PLATFORM/$USAGE"
+    printf '\nBuilding %s (%s, %s)\n' "$program" "$PLATFORM" "$USAGE"
+    rm -rf "$build_dir"
+    mkdir -p "$build_dir/obj"
+    cp -R "$SPLASH2DIR/$program/src/." "$build_dir/obj/"
+
+    if [ "$program" = volrend ]; then
+        "$MAKE" -C "$build_dir/obj/libtiff"
+        "$MAKE" -C "$build_dir/obj/libtiff" install
+        export CFLAGS="$CFLAGS -Wl,--allow-multiple-definition -I$build_dir/libtiff/include"
+        export LDFLAGS="$LDFLAGS -L$build_dir/libtiff/lib -ltiff"
+    fi
+    "$MAKE" -C "$build_dir/obj"
+    "$MAKE" -C "$build_dir/obj" install
+)
+
+if [ "$PROGRAM" = all ]; then
+    for program in $ALL; do
+        build_program "$program"
     done
-
-    echo "============================================================================"
-    echo "  Build of all programs completed."
-    echo "============================================================================"
-    if [ -n "$FAILED_LIST" ]; then
-        echo -e "\033[31m[ERROR] The following programs failed to build:$FAILED_LIST\033[0m"
-        exit 1
-    fi
-    exit 0
 else
-    echo "============================================================================"
-    echo "  Building Target : ${PROGRAM}"
-    echo "  Platform        : ${PLATFORM}"
-    echo "  USAGE           : ${USAGE}"
-    echo "============================================================================"
-
-
-    cd ${PROGRAM}
-    ./build.sh
-    if [ $? -ne 0 ]; then
-        echo -e "\033[31m[ERROR] Build failed for ${PROGRAM}!\033[0m"
-        cd ..
-        exit 1
-    fi
-    cd ${SPLASH2DIR}
-
-    echo "============================================================================"
-    echo "  Build of ${PROGRAM} completed."
-    echo "============================================================================"
+    build_program "$PROGRAM"
 fi
+printf '\nBuild completed (%s, %s).\n' "$PLATFORM" "$USAGE"

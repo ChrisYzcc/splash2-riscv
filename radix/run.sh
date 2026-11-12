@@ -1,5 +1,8 @@
-BENCH_DIR="$(pwd)"
-RUN_DIR=${BENCH_DIR}/build/${PLATFORM}/run
+#!/bin/sh
+set -eu
+
+BENCH_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+RUN_DIR="${BENCH_DIR}/build/${PLATFORM}/run"
 
 if [ ! -d "${RUN_DIR}" ]; then
     mkdir -p "${RUN_DIR}"
@@ -8,6 +11,6 @@ else
 fi
 
 echo "Running radix..."
-cd ${RUN_DIR}
-${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/radix -p${NTHREADS} -r1024 -n262144 -m524288
-cd ${BENCH_DIR}
+cd "${RUN_DIR}"
+"${BENCH_DIR}/build/${PLATFORM}/${USAGE}/bin/radix" -p${NTHREADS} -r1024 -n262144 -m524288
+cd "${BENCH_DIR}"

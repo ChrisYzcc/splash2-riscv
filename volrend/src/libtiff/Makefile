@@ -28,6 +28,8 @@ DESTDIR=${SPLASH2DIR}/volrend/build/${PLATFORM}/${USAGE}/libtiff
 #
 NULL=
 INSTALL = install
+HOSTCC ?= cc
+HOSTCFLAGS ?= -O2
 
 IPATH=	-I.
 #
@@ -145,9 +147,12 @@ tif_compress.o: tif_compress.c Makefile
 tif_fax3.o: tif_fax3.c g3states.h t4.h tif_fax3.h
 
 # Use HOST CC to build mkg3states
-g3states.h: mkg3states.c t4.h
-	gcc -o mkg3states ${CFLAGS} mkg3states.c
-	./mkg3states -c > g3states.h
+mkg3states: mkg3states.c t4.h prototypes.h
+	$(HOSTCC) $(HOSTCFLAGS) ${IPATH} ${CONF_LIBRARY} -o $@ mkg3states.c
+
+g3states.h: mkg3states
+	./mkg3states -c > $@.tmp
+	mv $@.tmp $@
 
 install: all installh
 	-for i in ${ALL}; do \

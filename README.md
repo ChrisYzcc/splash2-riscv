@@ -1,68 +1,99 @@
-# RISC-V Splash2 Benchmark
+# RISC-V SPLASH-2 benchmarks
 
-## Command
-**Build Command**
-```
-Usage: ./build.sh [-p program] [-r] [-h] [-u usage]
-  -p program   : specify the program to build. Default: barnes
-  -r           : set platform to rv64
-  -u           : set usage: normal, profiling, checkpoint. Default: normal
-  -h           : display this help message
-```
+This repository builds 14 SPLASH-2 workloads for native Linux or RISC-V Linux:
+`barnes`, `cholesky`, `fft`, `fmm`, `lu_cb`, `lu_ncb`, `ocean_cp`, `ocean_ncp`,
+`radiosity`, `radix`, `raytrace`, `volrend`, `water_nsquared`, and `water_spatial`.
 
-Example：
+## Requirements
 
-```bash
-./build.sh -r -u checkpoint -p all
-```
-Building all workload in RISC-V version for generating checkpoints.
+- A Linux host with a C compiler, GNU Make, GNU m4, binutils, tar, and gzip.
+- The target's static C, math, and pthread libraries; binaries are linked statically.
+- For RISC-V: the `riscv64-linux-gnu-` toolchain and RISC-V Linux development libraries.
+  On Debian/Ubuntu, the cross-compilation packages are `gcc-riscv64-linux-gnu`,
+  `binutils-riscv64-linux-gnu`, and `libc6-dev-riscv64-cross`.
 
-**Run Command**
-```
-Usage: ./run.sh [-p program] [-r] [-v version] [-h]
-  -p program   : specify the program to run, default: barnes
-  -r           : set platform to rv64
-  -n threads   : specify the number of threads, default: 1
-  -u usage     : set usage: normal, profiling, checkpoint. default: normal 
-                     normal: normal execution; 
-                     profiling: for profiling; 
-                     checkpoint: for checkpointing.
-  -h           : display this help message
+The hooks library is built directly with the C compiler and archiver; libtool is
+not required. `volrend` builds its bundled TIFF library and generates its decoding
+tables with a **host** compiler, including when cross-compiling.
+
+## Build
+
+```sh
+./build.sh -p all                         # native, normal mode
+./build.sh -r -p all                      # RISC-V, normal mode
+./build.sh -r -u checkpoint -p all        # RISC-V, NEMU checkpoint hooks
+./build.sh -r -u profiling -p all         # RISC-V, NEMU profiling hooks
+./build.sh -p barnes -u checkpoint        # native, PARSEC ROI/timing hooks
 ```
 
-**RISC-V Package**
+Defaults are `-p barnes` and `-u normal`; `-r` selects RISC-V. Use `-h` for help.
+The top-level script handles all benchmark builds and can be invoked from any
+working directory. Each selected program/mode is rebuilt from source, and a
+build error causes a nonzero exit status immediately.
 
-`gen_rv_pack.sh` will pack all the RISC-V bins and datas with running scripts into `splash2_rv_pack`. You can simply copy that package to the target RISC-V machine.
+`CROSS_COMPILE` can override the RISC-V toolchain prefix, for example:
+
+```sh
+CROSS_COMPILE=/opt/riscv/bin/riscv64-linux-gnu- ./build.sh -r -p all
 ```
-Usage: ./gen_rv_pack.sh [-i inputs] [-u usage] [-h]
-  -i inputs    : specify the inputs to package. Default: test
-  -u usage     : set usage: normal, profiling, checkpoint. Default: normal
-  -h           : display this help message
+
+`CC`, `AR`, `RANLIB`, `HOSTCC`, and `MAKE` can also override individual tools.
+`CFLAGS`, `PORTABILITY_FLAGS`, and `LDFLAGS` add flags to the defaults. Workload
+sources use GNU89 C; the hooks library uses GNU99 C.
+
+Build products are stored in `<program>/build/<native|rv64>/<mode>/` and ignored
+by Git. Sources under `src/` are not modified by the build.
+
+## Run
+
+```sh
+./run.sh -p barnes -n 2
+./run.sh -p fft -n 2 -u checkpoint
+./run.sh -r -p barnes -n 2               # on a RISC-V Linux machine
 ```
 
-## Tests Summay
-Native Platform: x86_64, Debian on WSL2
+Build the selected platform and mode first. Defaults are `barnes`, one thread,
+`native`, and `normal`. Thread-count restrictions depend on the workload (many
+require powers of two). Runtime errors are returned to the caller.
 
-RISC-V Platfrom: QEMU, Kunminghu Config
+Test inputs are stored as `inputs/input_test.tar.gz` with their original contents
+preserved. Run scripts extract them into `<program>/build/<platform>/run/` and
+replace that directory's previous run files on each invocation.
 
-| Test Name | Native Run    | RISC-V Run    |
-| ----      | :----:        | :----:        |
-| barnes    | *             | *             |
-| cholesky  | *             | *             |
-| fft       | *             | *             |
-| fmm       | *             | *             |
-| lu_cb     | *             | *             |
-| lu_ncb    | *             | *             |
-| ocean_cp  | *             | *             |
-| ocean_ncp | *             | *             |
-| radiosity | *             | *             |
-| radix     | *             | *             |
-| raytrace  | *             | *             |
-| volrend   | *             | *             |
-| water_ns  | *             | *             |
-| water_sp  | *             | *             |
+RISC-V `checkpoint` and `profiling` binaries contain custom NEMU instructions.
+Run them in the matching simulator environment. Native builds of these modes use
+the PARSEC ROI and timing hooks without NEMU instructions.
 
-`raytrace` will cause segmentation fault on qemu-riscv machine. - Fix: fix multiple definition.
+## Package for RISC-V
 
-## Future Work
-- [x] Fix `raytrace`.
+```sh
+./build.sh -r -p all -u normal
+./gen_rv_pack.sh -u normal
+```
+
+Copy `splash2_rv_pack/` to the target machine, then run, for example:
+
+```sh
+cd splash2_rv_pack
+./run.sh -r -p barnes -n 2 -u normal
+```
+
+The package includes the selected mode's binaries, compressed test inputs, and
+run scripts. The packaging script checks all required files before replacing an
+existing package. `-i test` is the only supported input set.
+
+## Cleanup and validation
+
+All generated builds and packages can be removed with:
+
+```sh
+rm -rf -- */build/ splash2_rv_pack/
+```
+
+Generated TIFF tables, the obsolete MIPS table-generator executable, and FMM
+runtime timing output are not source files and are no longer tracked. Reference
+outputs (`correct.out`), original source data, and third-party license notices
+are retained.
+
+See [BUILD_VALIDATION.md](BUILD_VALIDATION.md) for the verified build matrix and
+runtime coverage.

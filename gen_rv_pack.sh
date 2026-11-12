@@ -1,71 +1,57 @@
-SPLASH2DIR=$(pwd)
+#!/bin/sh
+set -eu
 
+SPLASH2DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
+INPUTS=test
+USAGE=normal
 
-INPUTS="test"
-USAGE="normal"
-
+usage() {
+    echo "Usage: $0 [-i test] [-u normal|profiling|checkpoint] [-h]"
+}
 while getopts "i:u:h" opt; do
     case "$opt" in
         i) INPUTS=$OPTARG ;;
         u) USAGE=$OPTARG ;;
-        h) echo "Usage: $0 [-i inputs] [-u usage] [-h]"
-           echo "  -i inputs    : specify the inputs to package. Default: test"
-           echo "  -u usage     : set usage: normal, profiling, checkpoint. Default: normal"
-           echo "  -h           : display this help message"
-           exit 0 ;;
+        h) usage; exit 0 ;;
+        *) usage >&2; exit 1 ;;
     esac
 done
+shift $((OPTIND - 1))
+[ "$#" -eq 0 ] || { usage >&2; exit 1; }
+case "$USAGE" in
+    normal|profiling|checkpoint) ;;
+    *) echo "Unknown usage mode: $USAGE" >&2; exit 1 ;;
+esac
+[ "$INPUTS" = test ] || { echo "Unknown inputs: $INPUTS" >&2; exit 1; }
 
-if [ ! -d "${SPLASH2DIR}/splash2_rv_pack" ]; then
-    mkdir -p ${SPLASH2DIR}/splash2_rv_pack
-else
-    rm -rf ${SPLASH2DIR}/splash2_rv_pack/*
-fi
-
-if [ "$USAGE" != "normal" ] && [ "$USAGE" != "profiling" ] && [ "$USAGE" != "checkpoint" ]; then
-    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
-    exit 1
-fi
-
-INPUT_LIST=""
-if [ "$INPUTS" = "test" ]; then
-    INPUT_LIST="test"
-else
-    echo "\033[31m[ERROR] Unknown inputs: $INPUTS\033[0m"
-    exit 1
-fi
-
-echo "==========================================================="
-echo "  Input sets to package   : $INPUT_LIST"
-echo "  Usage mode              : $USAGE"
-echo "==========================================================="
-
-for PROGRAM in $ALL; do
-    mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}
-
-    # Copy binaries
-    mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64/${USAGE}
-    cp -r ${SPLASH2DIR}/${PROGRAM}/build/rv64/${USAGE}/bin ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/build/rv64/${USAGE}/bin
-
-    # Copy inputs and run script
-    if [ -d "${SPLASH2DIR}/${PROGRAM}/inputs" ]; then
-        mkdir -p ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/inputs
-        for INPUT in $INPUT_LIST; do
-            INPUT_TAR="input_${INPUT}.tar"
-            if [ -f "${SPLASH2DIR}/${PROGRAM}/inputs/${INPUT_TAR}" ]; then
-                cp ${SPLASH2DIR}/${PROGRAM}/inputs/${INPUT_TAR} ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/inputs/${INPUT_TAR}
-            else
-                echo "\033[33m[WARNING] Input ${INPUT_TAR} does not exist for program ${PROGRAM}\033[0m"
-            fi
-        done
+# Check everything before replacing an existing package.
+for program in $ALL; do
+    binary="$SPLASH2DIR/$program/build/rv64/$USAGE/bin/$program"
+    [ -x "$binary" ] || {
+        echo "Binary not found: $binary. Run ./build.sh -r -p all -u $USAGE first." >&2
+        exit 1
+    }
+    if [ -d "$SPLASH2DIR/$program/inputs" ]; then
+        [ -f "$SPLASH2DIR/$program/inputs/input_test.tar.gz" ] || {
+            echo "Missing test inputs for $program" >&2
+            exit 1
+        }
     fi
-
-    cp -r ${SPLASH2DIR}/${PROGRAM}/run.sh ${SPLASH2DIR}/splash2_rv_pack/${PROGRAM}/
 done
 
-echo "  Generating package completed."
-echo "==========================================================="
-
-cp -r ${SPLASH2DIR}/run.sh ${SPLASH2DIR}/splash2_rv_pack/
-sed -i 's|^\./run\.sh$|/bin/sh ./run.sh|' ${SPLASH2DIR}/splash2_rv_pack/run.sh
+pack_dir="$SPLASH2DIR/splash2_rv_pack"
+rm -rf "$pack_dir"
+mkdir -p "$pack_dir"
+for program in $ALL; do
+    target="$pack_dir/$program"
+    mkdir -p "$target/build/rv64/$USAGE/bin"
+    cp "$SPLASH2DIR/$program/build/rv64/$USAGE/bin/$program" "$target/build/rv64/$USAGE/bin/"
+    if [ -d "$SPLASH2DIR/$program/inputs" ]; then
+        mkdir -p "$target/inputs"
+        cp "$SPLASH2DIR/$program/inputs/input_test.tar.gz" "$target/inputs/"
+    fi
+    cp "$SPLASH2DIR/$program/run.sh" "$target/"
+done
+cp "$SPLASH2DIR/run.sh" "$pack_dir/"
+printf 'Package created: %s (mode: %s)\n' "$pack_dir" "$USAGE"

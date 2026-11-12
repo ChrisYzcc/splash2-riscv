@@ -1,48 +1,53 @@
+#!/bin/sh
+set -eu
+
+SPLASH2DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PLATFORM=native
 PROGRAM=barnes
 NTHREADS=1
-USAGE="normal"
+USAGE=normal
+ALL="barnes cholesky fft fmm lu_cb lu_ncb ocean_cp ocean_ncp radiosity radix raytrace volrend water_nsquared water_spatial"
 
-while getopts "p:rhn:u:" opt; do
+usage() {
+    cat <<EOF_USAGE
+Usage: $0 [-p program] [-r] [-n threads] [-u normal|profiling|checkpoint] [-h]
+  -p program   Program to run (default: barnes)
+  -r           Run the rv64 binary on a RISC-V Linux machine
+  -n threads   Number of threads (default: 1)
+  -u usage     Build mode (default: normal)
+  -h           Display this help
+EOF_USAGE
+}
+
+while getopts "p:rn:u:h" opt; do
     case "$opt" in
         p) PROGRAM=$OPTARG ;;
         r) PLATFORM=rv64 ;;
         n) NTHREADS=$OPTARG ;;
         u) USAGE=$OPTARG ;;
-        h) echo "Usage: $0 [-p program] [-r] [-v version] [-h]"
-           echo "  -p program   : specify the program to run, default: barnes"
-           echo "  -r           : set platform to rv64"
-           echo "  -n threads   : specify the number of threads, default: 1"
-           echo "  -u usage     : set usage: normal, profiling, checkpoint. default: normal \\n \
-                    normal: normal execution; \\n \
-                    profiling: for profiling; \\n \
-                    checkpoint: for checkpointing."
-           echo "  -h           : display this help message"
-           exit 0 ;;
+        h) usage; exit 0 ;;
+        *) usage >&2; exit 1 ;;
     esac
 done
-
-# Check USAGE mode
-if [ "$USAGE" != "normal" ] && [ "$USAGE" != "profiling" ] && [ "$USAGE" != "checkpoint" ]; then
-    echo "\033[31m[ERROR] Unknown usage mode: $USAGE\033[0m"
+shift $((OPTIND - 1))
+[ "$#" -eq 0 ] || { usage >&2; exit 1; }
+case " $ALL " in
+    *" $PROGRAM "*) ;;
+    *) echo "Unknown program: $PROGRAM" >&2; exit 1 ;;
+esac
+case "$USAGE" in
+    normal|profiling|checkpoint) ;;
+    *) echo "Unknown usage mode: $USAGE" >&2; exit 1 ;;
+esac
+case "$NTHREADS" in
+    ''|*[!0-9]*|0*) echo "Thread count must be a positive integer: $NTHREADS" >&2; exit 1 ;;
+esac
+binary="$SPLASH2DIR/$PROGRAM/build/$PLATFORM/$USAGE/bin/$PROGRAM"
+[ -x "$binary" ] || {
+    echo "Binary not found: $binary. Build this program and mode first." >&2
     exit 1
-fi
-
-export PLATFORM
-export NTHREADS
-export USAGE
-
-echo "============================================================================"
-echo "  Running Target  : ${PROGRAM}"
-echo "  Threads         : ${NTHREADS}"
-echo "  Platform        : ${PLATFORM}"
-echo "  USAGE           : ${USAGE}"
-echo "============================================================================"
-
-cd ${PROGRAM}
-./run.sh
-cd ..
-
-echo "============================================================================"
-echo "  Finished Running Target : ${PROGRAM}"
-echo "============================================================================"
+}
+export PLATFORM NTHREADS USAGE
+printf 'Running %s (%s, %s, %s threads)\n' "$PROGRAM" "$PLATFORM" "$USAGE" "$NTHREADS"
+cd "$SPLASH2DIR/$PROGRAM"
+exec ./run.sh

@@ -1,2 +1,13 @@
-*/build
-splash2_rv_pack/
+# Out-of-tree objects, binaries, libraries, extracted inputs and run outputs.
+/*/build/
+/splash2_rv_pack/
+
+# Generated files from manual builds in the source directory.
+*.o
+*.a
+*.so
+*.so.*
+/volrend/src/libtiff/mkg3states
+/volrend/src/libtiff/g3states.h
+/fmm/src/times
+/parsec_hooks/src/doc/
