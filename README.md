@@ -94,6 +94,3 @@ Generated TIFF tables, the obsolete MIPS table-generator executable, and FMM
 runtime timing output are not source files and are no longer tracked. Reference
 outputs (`correct.out`), original source data, and third-party license notices
 are retained.
-
-See [BUILD_VALIDATION.md](BUILD_VALIDATION.md) for the verified build matrix and
-runtime coverage.
